@@ -1,5 +1,6 @@
 # tr_airdrop
 FiveM ESX & QB AirDrop blackmarket system
+If you have any suggestions/bugs please contact me on discord: _.trowe
 
 ## Preview
 https://streamable.com/cqsp8q
