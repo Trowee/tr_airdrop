@@ -116,17 +116,17 @@ end)
 RegisterNetEvent('blackmarket:startAirdrop')
 AddEventHandler('blackmarket:startAirdrop', function(dropLocation, items)
     currentDrop = {location = dropLocation, items = items}
-    
+
     lib.showTextUI('Airdrop is on its way. Follow checkpoint.')
     SetNewWaypoint(dropLocation.x, dropLocation.y)
-    
+
     CreateThread(function()
         while currentDrop do
             local playerCoords = GetEntityCoords(PlayerPedId())
             local distance = #(playerCoords - dropLocation)
-            
+
             if distance < Config.DropRadius then
-                TriggerEvent('blackmarket:spawnAirdrop', flare)
+                TriggerServerEvent('blackmarket:spawnAirdrop', dropLocation)
                 break
             end
             Wait(1000)
@@ -134,45 +134,50 @@ AddEventHandler('blackmarket:startAirdrop', function(dropLocation, items)
     end)
 end)
 
-RegisterNetEvent('blackmarket:spawnAirdrop')
-AddEventHandler('blackmarket:spawnAirdrop', function(flare)
+RegisterNetEvent('blackmarket:spawnAirdropForAll')
+AddEventHandler('blackmarket:spawnAirdropForAll', function(dropLocation)
     lib.hideTextUI()
-    
-    local dropCoords = currentDrop.location + vector3(0, 0, Config.AirdropHeight)
-    local groundZ = currentDrop.location.z
-    
+
+    local dropCoords = dropLocation + vector3(0, 0, Config.AirdropHeight)
+    local groundZ = dropLocation.z
+
     local boxModel = `prop_box_wood05a`
     RequestModel(boxModel)
     while not HasModelLoaded(boxModel) do
         Wait(0)
     end
+    
+    -- Request a network ID for the box
     box = CreateObject(boxModel, dropCoords, true, true, true)
+    local netId = NetworkGetNetworkIdFromEntity(box)
+    SetNetworkIdExistsOnAllMachines(netId, true)
+    SetNetworkIdCanMigrate(netId, false)
+    
     local parachuteModel = `p_cargo_chute_s`
     RequestModel(parachuteModel)
     while not HasModelLoaded(parachuteModel) do
         Wait(0)
     end
     local parachute = CreateObject(parachuteModel, dropCoords, true, true, true)
-    
+
     AttachEntityToEntity(parachute, box, 0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
-    
+
     CreateThread(function()
         while true do
             local boxCoords = GetEntityCoords(box)
-            
+
             if boxCoords.z <= groundZ + 0.1 then
                 DeleteObject(parachute)
-                DeleteObject(flare)
                 SetEntityCoords(box, boxCoords.x, boxCoords.y, groundZ, false, false, false, false)
                 PlaceObjectOnGroundProperly(box)
                 FreezeEntityPosition(box, true)
                 TriggerEvent('blackmarket:createDroppedCrate', box)
                 break
             end
-            
+
             -- Simulate falling
             SetEntityCoords(box, boxCoords.x, boxCoords.y, boxCoords.z - 0.1, false, false, false, false)
-            
+
             Wait(10)
         end
     end)
@@ -213,11 +218,6 @@ AddEventHandler('blackmarket:collectAirdrop', function(crate)
     hasCollected = false
 end)
 
-
-
-
-
-
 RegisterNetEvent('blackmarket:createDroppedCrate')
 AddEventHandler('blackmarket:createDroppedCrate', function(crate)
     exports.ox_target:addBoxZone({
@@ -241,4 +241,12 @@ AddEventHandler('blackmarket:createDroppedCrate', function(crate)
         description = 'Airdrop arrived at the location!',
         type = 'success'
     })
+end)
+
+RegisterNetEvent('blackmarket:removeAirdrop')
+AddEventHandler('blackmarket:removeAirdrop', function()
+    if DoesEntityExist(box) then
+        DeleteObject(box)
+    end
+    currentDrop = nil
 end)
