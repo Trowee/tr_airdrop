@@ -1,17 +1,20 @@
 Config = {}
 
-Config.Framework = 'esx' -- 'esx' or 'qb'
-Config.Inventory = 'ox' -- 'qb' or 'ox'
+Config.Framework = 'qb' -- 'esx' or 'qb'
+Config.Inventory = 'qb' -- 'qb' or 'ox'
+Config.Target = 'qb' -- ox for ox_target or qb for qb-target
 
 Config.NPCLocation = vector4(1536.7802, 3593.3811, 38.7665, 211.9744)
 
 Config.Blip = true
 
+Config.BreakingTime = 5000 -- You can configure time that player needs to break crate (in ms)
+
 Config.Items = {
     {label = 'Pistol', item = 'WEAPON_PISTOL', price = 15000},
     {label = 'SMG', item = 'WEAPON_SMG', price = 25000},
     {label = 'Assault Rifle', item = 'WEAPON_ASSAULTRIFLE', price = 35000},
-    {label = 'Armor', item = 'armour', price = 5000},
+    {label = 'Armor', item = 'armor', price = 5000},
     {label = 'Lockpick', item = 'lockpick', price = 1000}
 }
 
