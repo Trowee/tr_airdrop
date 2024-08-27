@@ -2,6 +2,8 @@ local cart = {}
 local currentDrop = nil
 local hasCollected = false
 local box = nil
+local smoke = nil
+local wayp = nil
 
 CreateThread(function()
     local model = `a_m_m_eastsa_02`
@@ -9,28 +11,45 @@ CreateThread(function()
     while not HasModelLoaded(model) do
         Wait(0)
     end
-    
+
     local npc = CreatePed(4, model, Config.NPCLocation.x, Config.NPCLocation.y, Config.NPCLocation.z - 1, Config.NPCLocation.w, false, true)
     SetEntityInvincible(npc, true)
     FreezeEntityPosition(npc, true)
     SetBlockingOfNonTemporaryEvents(npc, true)
-    
-    exports.ox_target:addBoxZone({
-        coords = vector3(Config.NPCLocation.x, Config.NPCLocation.y, Config.NPCLocation.z),
-        size = vector3(1, 1, 2),
-        rotation = Config.NPCLocation.w,
-        debug = false,
-        options = {
-            {
-                name = 'open_black_market',
-                event = 'blackmarket:openMenu',
-                icon = 'fas fa-shopping-cart',
-                label = 'Open Black Market',
-            }
-        }
-    })
 
-    -- blip
+    if Config.Target == 'ox' then
+        exports.ox_target:addBoxZone({
+            coords = vector3(Config.NPCLocation.x, Config.NPCLocation.y, Config.NPCLocation.z),
+            size = vector3(1, 1, 2),
+            rotation = Config.NPCLocation.w,
+            debug = false,
+            options = {
+                {
+                    name = 'open_black_market',
+                    event = 'blackmarket:openMenu',
+                    icon = 'fas fa-shopping-cart',
+                    label = 'Open Black Market',
+                }
+            }
+        })
+    elseif Config.Target == 'qb' then
+        exports['qb-target']:AddBoxZone("blackmarket_npc", vector3(Config.NPCLocation.x, Config.NPCLocation.y, Config.NPCLocation.z), 1, 1, {
+            name = "blackmarket_npc",
+            heading = Config.NPCLocation.w,
+            debugPoly = false,
+            minZ = Config.NPCLocation.z - 1,
+            maxZ = Config.NPCLocation.z + 1
+        }, {
+            options = {
+                {
+                    event = "blackmarket:openMenu",
+                    icon = "fas fa-shopping-cart",
+                    label = "Open Black Market",
+                }
+            },
+            distance = 2.0
+        })
+    end
 
     if Config.Blip then
         npcBlip = AddBlipForCoord(Config.NPCLocation.x, Config.NPCLocation.y, Config.NPCLocation.z)
@@ -53,42 +72,41 @@ AddEventHandler('blackmarket:openMenu', function()
             title = item.label,
             description = 'Price: $' .. item.price,
             onSelect = function()
-                TriggerEvent('blackmarket:addToCart', {item = item})
+                local input = lib.inputDialog('Add to Cart', {
+                    {type = 'number', label = 'Amount', description = 'Enter the amount you want to buy', required = true, min = 1}
+                })
+                if input then
+                    TriggerEvent('blackmarket:addToCart', {item = item, amount = input[1]})
+                end
             end
         })
     end
-    
+
     table.insert(options, {
         title = 'View Cart',
         onSelect = function()
             TriggerEvent('blackmarket:viewCart')
         end
     })
-    
+
     lib.registerContext({
         id = 'black_market',
         title = 'Black Market',
         options = options
     })
-    
+
     lib.showContext('black_market')
 end)
 
 RegisterNetEvent('blackmarket:addToCart')
 AddEventHandler('blackmarket:addToCart', function(data)
-    if lib.alertDialog({
-        header = 'Order Check',
-        content = 'Are you sure you want to buy: ' .. data.item.label .. '?',
-        centered = true,
-        cancel = true
-    }) then
-        table.insert(cart, data.item)
-        lib.notify({
-            title = 'Added to cart',
-            description = data.item.label .. ' added to cart',
-            type = 'success'
-        })
-    end
+    table.insert(cart, {item = data.item, amount = data.amount})
+    lib.notify({
+        title = 'Added to cart',
+        description = data.amount .. 'x ' .. data.item.label .. ' added to cart',
+        type = 'success'
+    })
+    TriggerEvent('blackmarket:openMenu')
 end)
 
 RegisterNetEvent('blackmarket:viewCart')
@@ -96,13 +114,13 @@ AddEventHandler('blackmarket:viewCart', function()
     local totalPrice = 0
     local cartItems = ''
     for _, item in ipairs(cart) do
-        totalPrice = totalPrice + item.price
-        cartItems = cartItems .. item.label .. ', '
+        totalPrice = totalPrice + (item.item.price * item.amount)
+        cartItems = cartItems .. item.amount .. 'x ' .. item.item.label .. ', '
     end
-    
+
     if lib.alertDialog({
         header = 'Cart',
-        content = 'Items: ' .. cartItems .. '\nPrice: $' .. totalPrice,
+        content = 'Items: ' .. cartItems .. '\nTotal Price: $' .. totalPrice,
         centered = true,
         cancel = true
     }) then
@@ -111,14 +129,25 @@ AddEventHandler('blackmarket:viewCart', function()
     end
 end)
 
-
-
 RegisterNetEvent('blackmarket:startAirdrop')
 AddEventHandler('blackmarket:startAirdrop', function(dropLocation, items)
     currentDrop = {location = dropLocation, items = items}
 
-    lib.showTextUI('Airdrop is on its way. Follow checkpoint.')
-    SetNewWaypoint(dropLocation.x, dropLocation.y)
+    lib.showTextUI('Airdrop is on its way. Follow the checkpoint.')
+    wayp = AddBlipForCoord(dropLocation.x, dropLocation.y, dropLocation.z)
+    SetBlipRoute(wayp, true)
+    SetBlipRouteColour(wayp, 66)
+
+    SetBlipAlpha(blip, 0)
+
+    local _, z = GetGroundZFor_3dCoord(dropLocation.x, dropLocation.y, dropLocation.z, 0)
+    UseParticleFxAssetNextCall('core')
+    if z == 0.0 then
+        z = dropLocation.z
+    end
+    local size = 1.0
+    smoke = StartParticleFxLoopedAtCoord('exp_grd_flare', vector3(dropLocation.x, dropLocation.y, z), 0.0, 0.0, 0.0, size, false, false, false, false)
+    SetParticleFxLoopedAlpha(smoke, 0.8)
 
     CreateThread(function()
         while currentDrop do
@@ -137,6 +166,7 @@ end)
 RegisterNetEvent('blackmarket:spawnAirdropForAll')
 AddEventHandler('blackmarket:spawnAirdropForAll', function(dropLocation)
     lib.hideTextUI()
+    RemoveBlip(wayp)
 
     local dropCoords = dropLocation + vector3(0, 0, Config.AirdropHeight)
     local groundZ = dropLocation.z
@@ -146,13 +176,12 @@ AddEventHandler('blackmarket:spawnAirdropForAll', function(dropLocation)
     while not HasModelLoaded(boxModel) do
         Wait(0)
     end
-    
-    -- Request a network ID for the box
+
     box = CreateObject(boxModel, dropCoords, true, true, true)
     local netId = NetworkGetNetworkIdFromEntity(box)
     SetNetworkIdExistsOnAllMachines(netId, true)
     SetNetworkIdCanMigrate(netId, false)
-    
+
     local parachuteModel = `p_cargo_chute_s`
     RequestModel(parachuteModel)
     while not HasModelLoaded(parachuteModel) do
@@ -160,7 +189,7 @@ AddEventHandler('blackmarket:spawnAirdropForAll', function(dropLocation)
     end
     local parachute = CreateObject(parachuteModel, dropCoords, true, true, true)
 
-    AttachEntityToEntity(parachute, box, 0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
+    AttachEntityToEntity(parachute, box, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, false, false, false, false, 2, true)
 
     CreateThread(function()
         while true do
@@ -175,21 +204,35 @@ AddEventHandler('blackmarket:spawnAirdropForAll', function(dropLocation)
                 break
             end
 
-            -- Simulate falling
             SetEntityCoords(box, boxCoords.x, boxCoords.y, boxCoords.z - 0.1, false, false, false, false)
 
             Wait(10)
         end
     end)
+
+    lib.notify({
+        title = 'Airdrop Incoming',
+        description = 'Airdrop just got off the plane',
+        type = 'inform'
+    })
 end)
 
 RegisterNetEvent('blackmarket:collectAirdrop')
 AddEventHandler('blackmarket:collectAirdrop', function(crate)
     hasCollected = true
-    exports.ox_target:removeZone('cratezone')
-    
+    if Config.Target == 'ox' then
+        exports.ox_target:removeZone('cratezone')
+    elseif Config.Target == 'qb' then
+        exports['qb-target']:RemoveZone("cratezone")
+    end
+
+    if smoke then
+        StopParticleFxLooped(smoke, 0)
+        smoke = nil 
+    end
+
     local progress = lib.progressCircle({
-        duration = 15000,
+        duration = Config.BreakingTime,
         label = 'Breaking crate...',
         useWhileDead = false,
         canCancel = true,
@@ -206,39 +249,71 @@ AddEventHandler('blackmarket:collectAirdrop', function(crate)
             rot = vec3(0.0, 0.0, 0.0) 
         }
     })
-    
+
     if progress then
-        TriggerServerEvent('blackmarket:collectAirdrop', currentDrop.items)
-        
+        local itemsToSend = {}
+        for _, item in ipairs(currentDrop.items) do
+            if type(item) == 'table' and type(item.item) == 'table' then
+                table.insert(itemsToSend, {
+                    item = item.item.item,
+                    amount = item.amount
+                })
+            else
+            end
+        end
+        TriggerServerEvent('blackmarket:collectAirdrop', itemsToSend)
         if DoesEntityExist(box) then
             DeleteObject(box)
         end
-    else end
+    end
+
 
     hasCollected = false
 end)
 
+
 RegisterNetEvent('blackmarket:createDroppedCrate')
 AddEventHandler('blackmarket:createDroppedCrate', function(crate)
-    exports.ox_target:addBoxZone({
-        name = 'cratezone',
-        coords = GetEntityCoords(crate),
-        size = vector3(2, 2, 2),
-        rotation = 0,
-        debug = false,
-        options = {
-            {
-                name = 'collect_airdrop',
-                event = 'blackmarket:collectAirdrop',
-                icon = 'fas fa-box-open',
-                label = 'Collect airdrop',
-            }
-        }
-    })
+    local crateCoords = GetEntityCoords(crate)
     
+    if Config.Target == 'ox' then
+        exports.ox_target:addBoxZone({
+            name = 'cratezone',
+            coords = crateCoords,
+            size = vector3(2, 2, 2),
+            rotation = 0,
+            debug = false,
+            options = {
+                {
+                    name = 'collect_airdrop',
+                    event = 'blackmarket:collectAirdrop',
+                    icon = 'fas fa-box-open',
+                    label = 'Collect airdrop',
+                }
+            }
+        })
+    elseif Config.Target == 'qb' then
+        exports['qb-target']:AddBoxZone("cratezone", crateCoords, 2, 2, {
+            name = "cratezone",
+            heading = 0,
+            debugPoly = false,
+            minZ = crateCoords.z - 1,
+            maxZ = crateCoords.z + 1
+        }, {
+            options = {
+                {
+                    event = "blackmarket:collectAirdrop",
+                    icon = "fas fa-box-open",
+                    label = "Collect airdrop",
+                }
+            },
+            distance = 2.0
+        })
+    end
+
     lib.notify({
         title = 'Airdrop',
-        description = 'Airdrop arrived at the location!',
+        description = 'Airdrop has arrived at the location!',
         type = 'success'
     })
 end)
