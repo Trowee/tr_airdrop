@@ -2,7 +2,7 @@
 FiveM ESX & QB AirDrop blackmarket system
 If you have any suggestions/bugs please contact me on discord: _.trowe
 
-## Forum post
+## Preview
 [Forum post](https://forum.cfx.re/t/free-esx-qb-airdrop-black-market-system/5262171)
 [Preview](https://www.youtube.com/watch?v=fng7wd0g_nY&feature=youtu.be)
 
