@@ -15,7 +15,7 @@ end
 
 local function RemoveMoney(player, amount)
     if Config.Framework == 'qb' then
-        return player.Functions.RemoveMoney('black_money', amount)
+        return player.Functions.RemoveMoney('cash', amount)
     elseif Config.Framework == 'esx' then
         if player.getAccount('black_money').money >= amount then
             player.removeAccountMoney('black_money', amount)
@@ -25,35 +25,46 @@ local function RemoveMoney(player, amount)
     end
 end
 
+RegisterServerEvent('blackmarket:spawnAirdrop')
+AddEventHandler('blackmarket:spawnAirdrop', function(dropLocation)
+    TriggerClientEvent('blackmarket:spawnAirdropForAll', -1, dropLocation)
+end)
+
 RegisterNetEvent('blackmarket:buyItems')
 AddEventHandler('blackmarket:buyItems', function(items, totalPrice)
     local src = source
     local player = GetPlayer(src)
-   
+    
     if RemoveMoney(player, totalPrice) then
         local dropLocation = Config.DropLocations[math.random(#Config.DropLocations)]
         TriggerClientEvent('blackmarket:startAirdrop', src, dropLocation, items)
     else
-        TriggerClientEvent('ox_lib:notify', src, {type = 'error', description = 'You dont have enough money!'})
+        TriggerClientEvent('ox_lib:notify', src, {type = 'error', description = 'You do not have enough money!'})
     end
-end)
-
-RegisterNetEvent('blackmarket:spawnAirdrop')
-AddEventHandler('blackmarket:spawnAirdrop', function(dropLocation)
-    TriggerClientEvent('blackmarket:spawnAirdropForAll', -1, dropLocation)
 end)
 
 RegisterNetEvent('blackmarket:collectAirdrop')
 AddEventHandler('blackmarket:collectAirdrop', function(items)
     local src = source
     local player = GetPlayer(src)
-    for _, item in ipairs(items) do
-        if Config.Inventory == 'ox' then
-            exports.ox_inventory:AddItem(src, item.item, 1)
-        elseif Config.Inventory == 'qb' then
-            player.Functions.AddItem(item.item, 1)
+   
+    if not player then
+        return
+    end
+
+    for _, itemData in ipairs(items) do
+        if type(itemData) == 'table' and type(itemData.item) == 'string' and type(itemData.amount) == 'number' then
+            if Config.Inventory == 'ox' then
+                local itemDef = exports.ox_inventory:Items(itemData.item)
+                if itemDef then
+                    exports.ox_inventory:AddItem(src, itemData.item, itemData.amount)
+                end
+            elseif Config.Inventory == 'qb' then
+                player.Functions.AddItem(itemData.item, itemData.amount)
+            end
         end
     end
-    TriggerClientEvent('ox_lib:notify', src, {type = 'success', description = 'You collected Airdrop'})
+   
+    TriggerClientEvent('ox_lib:notify', src, {type = 'success', description = 'You collected the airdrop'})
     TriggerClientEvent('blackmarket:removeAirdrop', -1)
 end)
