@@ -4,7 +4,7 @@ If you have any suggestions/bugs please contact me on discord: _.trowe
 
 ## Preview
 [Forum post](https://forum.cfx.re/t/free-esx-qb-airdrop-black-market-system/5262171)
-[Preview]([https://www.youtube.com/watch?v=fng7wd0g_nY&feature=youtu.be](https://youtu.be/WfP8tlS078o))
+[Preview](https://www.youtube.com/watch?v=fng7wd0g_nY&feature=youtu.be)
 
 ## Config preview
 
