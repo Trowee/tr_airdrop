@@ -4,11 +4,12 @@ If you have any suggestions/bugs please contact me on discord: _.trowe
 
 ## Preview
 [Forum post](https://forum.cfx.re/t/free-esx-qb-airdrop-black-market-system/5262171)
-[Preview](https://www.youtube.com/watch?v=fng7wd0g_nY&feature=youtu.be)
+[Preview]([https://www.youtube.com/watch?v=fng7wd0g_nY&feature=youtu.be](https://youtu.be/WfP8tlS078o))
 
 ## Config preview
 
-![image](https://github.com/user-attachments/assets/c839ffc0-4491-4c1f-9c91-351c5c2269bc)
+![image](https://github.com/user-attachments/assets/80ac9a50-c4cd-4527-9749-3b8d8688e0df)
+
 
 ### Do Not Sell or Redistribute
 
