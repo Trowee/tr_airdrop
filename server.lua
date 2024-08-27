@@ -1,5 +1,4 @@
 local QBCore, ESX
-
 if Config.Framework == 'qb' then
     QBCore = exports['qb-core']:GetCoreObject()
 elseif Config.Framework == 'esx' then
@@ -30,7 +29,7 @@ RegisterNetEvent('blackmarket:buyItems')
 AddEventHandler('blackmarket:buyItems', function(items, totalPrice)
     local src = source
     local player = GetPlayer(src)
-    
+   
     if RemoveMoney(player, totalPrice) then
         local dropLocation = Config.DropLocations[math.random(#Config.DropLocations)]
         TriggerClientEvent('blackmarket:startAirdrop', src, dropLocation, items)
@@ -39,11 +38,15 @@ AddEventHandler('blackmarket:buyItems', function(items, totalPrice)
     end
 end)
 
+RegisterNetEvent('blackmarket:spawnAirdrop')
+AddEventHandler('blackmarket:spawnAirdrop', function(dropLocation)
+    TriggerClientEvent('blackmarket:spawnAirdropForAll', -1, dropLocation)
+end)
+
 RegisterNetEvent('blackmarket:collectAirdrop')
 AddEventHandler('blackmarket:collectAirdrop', function(items)
     local src = source
     local player = GetPlayer(src)
-
     for _, item in ipairs(items) do
         if Config.Inventory == 'ox' then
             exports.ox_inventory:AddItem(src, item.item, 1)
@@ -51,8 +54,6 @@ AddEventHandler('blackmarket:collectAirdrop', function(items)
             player.Functions.AddItem(item.item, 1)
         end
     end
-
-    TriggerClientEvent('ox_lib:notify', src, {type = 'success', description = 'You collected AirDrop'})
-
-    TriggerClientEvent('blackmarket:removeAirdrop', src)
+    TriggerClientEvent('ox_lib:notify', src, {type = 'success', description = 'You collected Airdrop'})
+    TriggerClientEvent('blackmarket:removeAirdrop', -1)
 end)
