@@ -8,7 +8,8 @@ If you have any suggestions/bugs please contact me on discord: _.trowe
 
 ## Config preview
 
-![image](https://github.com/user-attachments/assets/80ac9a50-c4cd-4527-9749-3b8d8688e0df)
+![image](https://github.com/user-attachments/assets/563d5891-c23e-4a3d-bcc8-d6d232d8cfad)
+
 
 
 ### Do Not Sell or Redistribute
