@@ -30,6 +30,12 @@ AddEventHandler('blackmarket:spawnAirdrop', function(dropLocation)
     TriggerClientEvent('blackmarket:spawnAirdropForAll', -1, dropLocation)
 end)
 
+RegisterServerEvent('blackmarket:startFlareSV')
+AddEventHandler('blackmarket:startFlareSV', function(dropLocation)
+    TriggerClientEvent('blackmarket:startFlareCL', -1, dropLocation)
+end)
+
+
 RegisterNetEvent('blackmarket:buyItems')
 AddEventHandler('blackmarket:buyItems', function(items, totalPrice)
     local src = source
@@ -42,6 +48,13 @@ AddEventHandler('blackmarket:buyItems', function(items, totalPrice)
         TriggerClientEvent('ox_lib:notify', src, {type = 'error', description = 'You do not have enough money!'})
     end
 end)
+
+RegisterNetEvent('blackmarket:startAirdrop')
+AddEventHandler('blackmarket:startAirdrop', function(dropLocation, items)
+    currentDrop = {location = dropLocation, items = items}
+    TriggerClientEvent('blackmarket:spawnAirdropForAll', -1, dropLocation)
+end)
+
 
 RegisterNetEvent('blackmarket:collectAirdrop')
 AddEventHandler('blackmarket:collectAirdrop', function(items)
