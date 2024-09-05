@@ -1,8 +1,9 @@
 Config = {}
 
-Config.Framework = 'qb' -- 'esx' or 'qb'
-Config.Inventory = 'qb' -- 'qb' or 'ox'
-Config.Target = 'qb' -- ox for ox_target or qb for qb-target
+Config.Framework = 'esx' -- 'esx' or 'qb'
+Config.Inventory = 'ox' -- 'qb' or 'ox'
+Config.UseTarget = true -- Set it to true if you want to use target if it's false it will use ox lib text ui
+Config.Target = 'ox' -- ox for ox_target or qb for qb-target
 
 Config.NPCLocation = vector4(1536.7802, 3593.3811, 38.7665, 211.9744)
 
